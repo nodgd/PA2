@@ -1,7 +1,9 @@
 package decaf.typecheck;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import decaf.Driver;
@@ -20,6 +22,7 @@ import decaf.error.BadPrintCompArgError;
 import decaf.error.BadReturnTypeError;
 import decaf.error.BadTestExpr;
 import decaf.error.BreakOutOfLoopError;
+import decaf.error.CaseExprSwitchRepeatErrpr;
 import decaf.error.CaseExprSwitchTypeErrpr;
 import decaf.error.CaseExprTypeErrpr;
 import decaf.error.ClassNotFoundError;
@@ -322,14 +325,24 @@ public class TypeCheck extends Tree.Visitor {
 	public void visitCondExpr(Tree.CondExpr condExpr) {
 		condExpr.switchExpr.accept(this);
 		if (!condExpr.switchExpr.type.equal(BaseType.INT)) {
-			issueError(new CaseExprSwitchTypeErrpr(condExpr.getLocation(),
+			issueError(new CaseExprSwitchTypeErrpr(condExpr.switchExpr.getLocation(),
 					condExpr.switchExpr.type.toString()));
 		}
 		condExpr.type = null;
 		boolean getTypeError = false;
+		Set<Object> keySet = new HashSet<Object>();
 		for (Tree.Expr expr : condExpr.caseList) {
 			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
 			caseExpr.accept(this);
+			//检测左边的值是否有重复
+			if (caseExpr.constant != null) {
+				if (keySet.contains(((Tree.Literal) caseExpr.constant).value)) {
+					issueError(new CaseExprSwitchRepeatErrpr(caseExpr.getLocation()));
+				} else {
+					keySet.add(((Tree.Literal) caseExpr.constant).value);
+				}
+			}
+			//检测右边的类型是否全相同
 			Type caseExprType = caseExpr.type;
 			if (caseExprType.equal(BaseType.IMG)) {
 				caseExprType = BaseType.COMPLEX;
@@ -337,7 +350,7 @@ public class TypeCheck extends Tree.Visitor {
 			if (condExpr.type == null) {
 			    condExpr.type = caseExprType;
 			} else if (!condExpr.type.equal(caseExprType)) {
-				issueError(new CaseExprTypeErrpr(condExpr.getLocation(),
+				issueError(new CaseExprTypeErrpr(caseExpr.getLocation(),
 						condExpr.type.toString(), caseExprType.toString()));
 				getTypeError = true;
 			}

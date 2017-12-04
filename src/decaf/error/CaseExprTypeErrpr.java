@@ -12,7 +12,7 @@ public class CaseExprTypeErrpr extends DecafError {
 	
 	private String exprType;
 	
-	public CaseExprTypeErrpr(Location location, String otherExpr, String exprType) {
+	public CaseExprTypeErrpr(Location location, String otherType, String exprType) {
 		super(location);
 		this.otherType = otherType;
 		this.exprType = exprType;
@@ -20,7 +20,7 @@ public class CaseExprTypeErrpr extends DecafError {
 
 	@Override
 	protected String getErrMsg() {
-		return exprType + " is different with other expr's type " + otherType;
+		return "type: " + exprType + " is different with other expr's type " + otherType;
 	}
 
 }
