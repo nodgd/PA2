@@ -7,9 +7,11 @@ import java.util.Stack;
 import decaf.Driver;
 import decaf.Location;
 import decaf.tree.Tree;
+import decaf.error.AssignCopyTypeError;
 import decaf.error.BadArgCountError;
 import decaf.error.BadArgTypeError;
 import decaf.error.BadArrElementError;
+import decaf.error.BadCopyError;
 import decaf.error.BadLengthArgError;
 import decaf.error.BadLengthError;
 import decaf.error.BadNewArrayLength;
@@ -156,12 +158,24 @@ public class TypeCheck extends Tree.Visitor {
 	@Override
 	public void visitDCopyExpr(Tree.DCopyExpr dcopyExpr) {
 		dcopyExpr.expr.accept(this);
+		if (!dcopyExpr.expr.type.isClassType()) {
+			issueError(new BadCopyError(dcopyExpr.getLocation(),
+					dcopyExpr.expr.type.toString()));
+			dcopyExpr.type = BaseType.ERROR;
+			return;
+		}
 		dcopyExpr.type = dcopyExpr.expr.type;
 	}
 
 	@Override
 	public void visitSCopyExpr(Tree.SCopyExpr scopyExpr) {
 		scopyExpr.expr.accept(this);
+		if (!scopyExpr.expr.type.isClassType()) {
+			issueError(new BadCopyError(scopyExpr.getLocation(),
+					scopyExpr.expr.type.toString()));
+			scopyExpr.type = BaseType.ERROR;
+			return;
+		}
 		scopyExpr.type = scopyExpr.expr.type;
 	}
 
@@ -517,6 +531,14 @@ public class TypeCheck extends Tree.Visitor {
 		assign.left.accept(this);
 		assign.expr.accept(this);
 		if (!assign.left.type.equal(BaseType.ERROR)
+			&& !assign.expr.type.equal(BaseType.ERROR)
+			&& (assign.expr.tag == Tree.DCOPYEXPR
+				|| assign.expr.tag == Tree.SCOPYEXPR)) {
+			if (!assign.left.type.equal(assign.expr.type)) {
+				issueError(new AssignCopyTypeError(assign.getLocation(),
+						assign.left.type.toString(), assign.expr.type.toString()));
+			}
+		} else if (!assign.left.type.equal(BaseType.ERROR)
 				&& (assign.left.type.isFuncType() || !assign.expr.type
 						.compatible(assign.left.type))) {
 			issueError(new IncompatBinOpError(assign.getLocation(),
