@@ -27,6 +27,7 @@ import decaf.error.CaseExprSwitchTypeErrpr;
 import decaf.error.CaseExprTypeErrpr;
 import decaf.error.ClassNotFoundError;
 import decaf.error.DecafError;
+import decaf.error.DoBranchLesTypeError;
 import decaf.error.FieldNotAccessError;
 import decaf.error.FieldNotFoundError;
 import decaf.error.IncompatBinOpError;
@@ -334,7 +335,7 @@ public class TypeCheck extends Tree.Visitor {
 		for (Tree.Expr expr : condExpr.caseList) {
 			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
 			caseExpr.accept(this);
-			//检测左边的值是否有重复
+			//妫�娴嬪乏杈圭殑鍊兼槸鍚︽湁閲嶅
 			if (caseExpr.constant != null) {
 				if (keySet.contains(((Tree.Literal) caseExpr.constant).value)) {
 					issueError(new CaseExprSwitchRepeatErrpr(caseExpr.getLocation()));
@@ -342,7 +343,7 @@ public class TypeCheck extends Tree.Visitor {
 					keySet.add(((Tree.Literal) caseExpr.constant).value);
 				}
 			}
-			//检测右边的类型是否全相同
+			//妫�娴嬪彸杈圭殑绫诲瀷鏄惁鍏ㄧ浉鍚�
 			Type caseExprType = caseExpr.type;
 			if (caseExprType.equal(BaseType.IMG)) {
 				caseExprType = BaseType.COMPLEX;
@@ -626,6 +627,25 @@ public class TypeCheck extends Tree.Visitor {
 			forLoop.loopBody.accept(this);
 		}
 		breaks.pop();
+	}
+	
+	@Override
+	public void visitDoStmt(Tree.DoStmt doStmt) {
+		for (Tree.Expr expr : doStmt.branchList) {
+			Tree.DoBranch doBranch = (Tree.DoBranch) expr;
+			doBranch.accept(this);
+		}
+	}
+	
+	@Override
+	public void visitDoBranch(Tree.DoBranch doBranch) {
+		doBranch.les.accept(this);
+		if (!doBranch.les.type.equal(BaseType.ERROR)
+			&& !doBranch.les.type.equal(BaseType.BOOL)) {
+			issueError(new DoBranchLesTypeError(doBranch.les.getLocation(),
+					doBranch.les.type.toString()));
+		}
+		doBranch.assign.accept(this);
 	}
 
 	@Override
