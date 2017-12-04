@@ -21,6 +21,7 @@ import decaf.error.BadReturnTypeError;
 import decaf.error.BadTestExpr;
 import decaf.error.BreakOutOfLoopError;
 import decaf.error.CaseExprSwitchTypeErrpr;
+import decaf.error.CaseExprTypeErrpr;
 import decaf.error.ClassNotFoundError;
 import decaf.error.DecafError;
 import decaf.error.FieldNotAccessError;
@@ -320,14 +321,30 @@ public class TypeCheck extends Tree.Visitor {
 	@Override
 	public void visitCondExpr(Tree.CondExpr condExpr) {
 		condExpr.switchExpr.accept(this);
-		for (Tree.Expr caseExpr : condExpr.caseList) {
-			((Tree.CaseExpr) caseExpr).accept(this);
-		}
 		if (!condExpr.switchExpr.type.equal(BaseType.INT)) {
 			issueError(new CaseExprSwitchTypeErrpr(condExpr.getLocation(),
 					condExpr.switchExpr.type.toString()));
 		}
-	    condExpr.type = condExpr.caseList.get(0).type;
+		condExpr.type = null;
+		boolean getTypeError = false;
+		for (Tree.Expr expr : condExpr.caseList) {
+			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
+			caseExpr.accept(this);
+			Type caseExprType = caseExpr.type;
+			if (caseExprType.equal(BaseType.IMG)) {
+				caseExprType = BaseType.COMPLEX;
+			}
+			if (condExpr.type == null) {
+			    condExpr.type = caseExprType;
+			} else if (!condExpr.type.equal(caseExprType)) {
+				issueError(new CaseExprTypeErrpr(condExpr.getLocation(),
+						condExpr.type.toString(), caseExprType.toString()));
+				getTypeError = true;
+			}
+		}
+		if (getTypeError) {
+			condExpr.type = BaseType.ERROR;
+		}
 	}
 	
 	@Override

@@ -1385,7 +1385,7 @@ break;
 case 89:
 //#line 434 "Parser.y"
 {
-                		yyval.expr = new Tree.TypeCast(val_peek(2).ident, val_peek(0).expr, val_peek(0).loc);
+                		yyval.expr = new Tree.TypeCast(val_peek(2).ident, val_peek(0).expr, val_peek(4).loc);
                 	}
 break;
 case 90:
