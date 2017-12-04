@@ -276,7 +276,7 @@ Call            :	Receiver IDENTIFIER '(' Actuals ')'
 				
 OneCaseExpr		:	Constant ':' Expr ';'
 					{
-						$$.expr = new Tree.CaseExpr($1.expr, $3.expr, $3.loc);
+						$$.expr = new Tree.CaseExpr($1.expr, $3.expr, $1.loc);
 					}
 				;
 				
@@ -307,7 +307,7 @@ AllCaseList		:	ConstCaseList DefCaseExpr
                 
 CondExpr		:	CASE '(' Expr ')' '{' AllCaseList '}'
                 	{
-                		$$.expr = new Tree.CondExpr($3.expr, $6.elist, $8.loc);
+                		$$.expr = new Tree.CondExpr($3.expr, $6.elist, $1.loc);
                 	}
                 ;
 

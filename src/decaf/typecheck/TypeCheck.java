@@ -20,6 +20,7 @@ import decaf.error.BadPrintCompArgError;
 import decaf.error.BadReturnTypeError;
 import decaf.error.BadTestExpr;
 import decaf.error.BreakOutOfLoopError;
+import decaf.error.CaseExprSwitchTypeErrpr;
 import decaf.error.ClassNotFoundError;
 import decaf.error.DecafError;
 import decaf.error.FieldNotAccessError;
@@ -314,6 +315,33 @@ public class TypeCheck extends Tree.Visitor {
 			cs = ((ClassType) callExpr.receiver.type).getClassScope();
 		}
 		checkCallExpr(callExpr, cs.lookupVisible(callExpr.method));
+	}
+	
+	@Override
+	public void visitCondExpr(Tree.CondExpr condExpr) {
+		condExpr.switchExpr.accept(this);
+		for (Tree.Expr caseExpr : condExpr.caseList) {
+			((Tree.CaseExpr) caseExpr).accept(this);
+		}
+		if (!condExpr.switchExpr.type.equal(BaseType.INT)) {
+			issueError(new CaseExprSwitchTypeErrpr(condExpr.getLocation(),
+					condExpr.switchExpr.type.toString()));
+		}
+	    condExpr.type = condExpr.caseList.get(0).type;
+	}
+	
+	@Override
+	public void visitCaseExpr(Tree.CaseExpr caseExpr) {
+		if (caseExpr.constant != null) {
+			caseExpr.constant.accept(this);
+		}
+		caseExpr.expression.accept(this);
+		if (caseExpr.constant != null
+			&& !caseExpr.constant.type.equal(BaseType.INT)) {
+			issueError(new CaseExprSwitchTypeErrpr(caseExpr.getLocation(),
+					caseExpr.constant.type.toString()));
+		}
+		caseExpr.type = caseExpr.expression.type;
 	}
 
 	@Override

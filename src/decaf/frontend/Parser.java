@@ -1172,7 +1172,7 @@ break;
 case 51:
 //#line 278 "Parser.y"
 {
-						yyval.expr = new Tree.CaseExpr(val_peek(3).expr, val_peek(1).expr, val_peek(1).loc);
+						yyval.expr = new Tree.CaseExpr(val_peek(3).expr, val_peek(1).expr, val_peek(3).loc);
 					}
 break;
 case 52:
@@ -1205,7 +1205,7 @@ break;
 case 56:
 //#line 309 "Parser.y"
 {
-                		yyval.expr = new Tree.CondExpr(val_peek(4).expr, val_peek(1).elist, val_peek(-1).loc);
+                		yyval.expr = new Tree.CondExpr(val_peek(4).expr, val_peek(1).elist, val_peek(6).loc);
                 	}
 break;
 case 57:
