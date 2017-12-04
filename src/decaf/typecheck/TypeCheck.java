@@ -32,6 +32,7 @@ import decaf.error.RefNonStaticError;
 import decaf.error.SubNotIntError;
 import decaf.error.SuperInStaticFuncError;
 import decaf.error.SuperMemberVarError;
+import decaf.error.SuperParentNotFoundError;
 import decaf.error.ThisInStaticFuncError;
 import decaf.error.UndeclVarError;
 import decaf.frontend.Parser;
@@ -170,9 +171,14 @@ public class TypeCheck extends Tree.Visitor {
 	}
 
 	private void checkCallExpr(Tree.CallExpr callExpr, Symbol f) {
-		Type receiverType = callExpr.receiver == null ? ((ClassScope) table
-				.lookForScope(Scope.Kind.CLASS)).getOwner().getType()
-				: callExpr.receiver.type;
+		Type receiverType = null;
+		if (callExpr.receiver == null) {
+			receiverType = ((ClassScope) table.lookForScope(Scope.Kind.CLASS)).getOwner().getType();
+		} else if (callExpr.receiver.tag == Tree.SUPEREXPR) {
+			receiverType = ((ClassType) callExpr.receiver.type).getParentType();
+		} else {
+			receiverType = callExpr.receiver.type;
+		}
 		if (f == null) {
 			issueError(new FieldNotFoundError(callExpr.getLocation(),
 					callExpr.method, receiverType.toString()));
@@ -268,8 +274,19 @@ public class TypeCheck extends Tree.Visitor {
 			return;
 		}
 
-		ClassScope cs = ((ClassType) callExpr.receiver.type)
-				.getClassScope();
+		ClassScope cs = null;
+		if (callExpr.receiver.tag == Tree.SUPEREXPR) {
+			if (((ClassType) callExpr.receiver.type).getParentType() == null) {
+				issueError(new SuperParentNotFoundError(callExpr.getLocation(),
+						callExpr.receiver.type.toString()));
+				callExpr.type = BaseType.ERROR;
+				return;
+			} else {
+				cs = ((ClassType) callExpr.receiver.type).getParentType().getClassScope();
+			}
+		} else {
+			cs = ((ClassType) callExpr.receiver.type).getClassScope();
+		}
 		checkCallExpr(callExpr, cs.lookupVisible(callExpr.method));
 	}
 
