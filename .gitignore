@@ -4,3 +4,6 @@ result/*
 *.pdf
 *.class
 src/decaf/frontend/Lexer.java
+/bin/
+.project
+.classpath
