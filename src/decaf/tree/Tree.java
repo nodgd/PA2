@@ -129,9 +129,24 @@ public abstract class Tree {
     public static final int CONDEXPR = CATCH + 1;
 
     /**
+     * Case expressions, of type each Case.
+     */
+    public static final int CASEEXPR = CONDEXPR + 1;
+
+    /**
+     * DoStmt statements, of type ...
+     */
+    public static final int DOSTMT = CASEEXPR + 1;
+
+    /**
+     * DoBranch statements, of type ...
+     */
+    public static final int DOBRANCH = DOSTMT + 1;
+
+    /**
      * Conditional statements, of type If.
      */
-    public static final int IF = CONDEXPR + 1;
+    public static final int IF = DOBRANCH + 1;
 
     /**
      * Expression statements, of type Exec.
@@ -254,7 +269,10 @@ public abstract class Tree {
     public static final int POS = ERRONEOUS + 1;
     public static final int NEG = POS + 1;
     public static final int NOT = NEG + 1;
-    public static final int COMPL = NOT + 1;
+    public static final int RE = NOT + 1;
+    public static final int IM = RE + 1;
+    public static final int COMPCAST = IM + 1;
+    public static final int COMPL = COMPCAST + 1;
     public static final int PREINC = COMPL + 1;
     public static final int PREDEC = PREINC + 1;
     public static final int POSTINC = PREDEC + 1;
@@ -291,9 +309,13 @@ public abstract class Tree {
     public static final int NULL = MOD + 1;
     public static final int CALLEXPR = NULL + 1;
     public static final int THISEXPR = CALLEXPR + 1;
-    public static final int READINTEXPR = THISEXPR + 1;
+    public static final int SUPEREXPR = THISEXPR + 1;
+    public static final int READINTEXPR = SUPEREXPR + 1;
     public static final int READLINEEXPR = READINTEXPR + 1;
-    public static final int PRINT = READLINEEXPR + 1;
+    public static final int DCOPYEXPR = READLINEEXPR + 1;
+    public static final int SCOPYEXPR = DCOPYEXPR + 1;
+    public static final int PRINT = SCOPYEXPR + 1;
+    public static final int PRINTCOMP = PRINT + 1;
     
     /**
      * Tags for Literal and TypeLiteral
@@ -302,6 +324,8 @@ public abstract class Tree {
     public static final int INT = VOID + 1; 
     public static final int BOOL = INT + 1; 
     public static final int STRING = BOOL + 1; 
+    public static final int IMG = STRING + 1;
+    public static final int COMPLEX = IMG + 1;
 
 
     public Location loc;
@@ -587,6 +611,78 @@ public abstract class Tree {
     		pw.decIndent();
     	}
    }
+    
+    /*
+     * do E1:S1 ||| E2:S2 ||| ... ||| En:Sn od
+     */
+    public static class DoStmt extends Tree {
+    	
+    	public List<Expr> branchList;
+    	
+    	public DoStmt(List<Expr> pareList, Location loc) {
+    		super(DOSTMT, loc);
+    		this.branchList = pareList;
+    	}
+
+    	@Override
+        public void accept(Visitor v) {
+            v.visitDoStmt(this);
+        }
+
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("do");
+    		pw.incIndent();
+    		pw.println("branches");
+    		pw.incIndent();
+    		if (branchList != null) {
+    			for (Expr e: branchList) {
+    				if (e != null) {
+    					e.printTo(pw);
+    				}
+    			}
+    		}
+    		pw.decIndent();
+    		pw.decIndent();
+    	}
+    }
+    
+    /*
+     * Ei:Si
+     */
+    public static class DoBranch extends Expr {
+    	
+    	public Expr les;
+    	public Tree assign;
+
+    	public DoBranch(Expr les, Tree assign, Location loc) {
+    		super(DOBRANCH, loc);
+    		this.les = les;
+    		this.assign = assign;
+    	}
+
+    	@Override
+        public void accept(Visitor v) {
+            v.visitDoBranch(this);
+        }
+
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("branch");
+    		pw.incIndent();
+    		if (les != null) {
+    			les.printTo(pw);
+    		} else {
+    			pw.println("<empty>");
+    		}
+    		if (assign != null) {
+    			assign.printTo(pw);
+    		} else {
+    			pw.println("<empty>");
+    		}
+    		pw.decIndent();
+    	}
+    }
 
     /**
       * An "if ( ) { } else { }" block
@@ -692,6 +788,34 @@ public abstract class Tree {
         @Override
     	public void printTo(IndentPrintWriter pw) {
     		pw.println("print");
+    		pw.incIndent();
+    		for (Expr e : exprs) {
+    			e.printTo(pw);
+    		}
+    		pw.decIndent();
+        }
+    }
+
+    /**
+      * A printComp statement.
+      */
+    public static class PrintComp extends Tree {
+
+    	public List<Expr> exprs;
+
+    	public PrintComp(List<Expr> exprs, Location loc) {
+    		super(PRINTCOMP, loc);
+    		this.exprs = exprs;
+    	}
+
+        @Override
+        public void accept(Visitor v) {
+            v.visitPrintComp(this);
+        }
+
+        @Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("printcomp");
     		pw.incIndent();
     		for (Expr e : exprs) {
     			e.printTo(pw);
@@ -1026,6 +1150,86 @@ public abstract class Tree {
     		pw.decIndent();
     	}
     }
+    
+    public static class CondExpr extends Expr {
+    	
+    	public Expr switchExpr;
+    	public List<Expr> caseList;
+    	
+    	public CondExpr(Expr switchExpr, List<Expr> caseList, Location loc) {
+    		super(CONDEXPR, loc);
+    		this.switchExpr = switchExpr;
+    		this.caseList = caseList;
+    	}
+    	
+    	@Override
+    	public void accept(Visitor visitor) {
+    		visitor.visitCondExpr(this);
+    	}
+    	
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("cond");
+    		pw.incIndent();
+    		if (switchExpr != null) {
+    			switchExpr.printTo(pw);
+    		} else {
+    			pw.println("<empty>");
+    		}
+    		pw.println("cases");
+    		pw.incIndent();
+    		if (caseList != null) {
+    			for (Tree c: caseList) {
+    				if (c != null) {
+    					c.printTo(pw);
+    				}
+    			}
+    		}
+    		pw.decIndent();
+    		pw.decIndent();
+    	}
+    }
+    
+    public static class CaseExpr extends Expr {
+    	
+    	public Expr constant;
+    	public Expr expression;
+
+    	public CaseExpr(Expr expression, Location loc) {
+    		super(CASEEXPR, loc);
+    		this.constant = null;
+    		this.expression = expression;
+    	}
+    	
+    	public CaseExpr(Expr constant, Expr expression, Location loc) {
+    		super(CASEEXPR, loc);
+    		this.constant = constant;
+    		this.expression = expression;
+    	}
+    	
+    	@Override
+    	public void accept(Visitor visitor) {
+    		visitor.visitCaseExpr(this);
+    	}
+    	
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		if (constant != null) {
+    			pw.println("case");
+        		pw.incIndent();
+        		constant.printTo(pw);
+    		} else {
+    			pw.println("default");
+        		pw.incIndent();
+    		}
+    		if (expression != null) {
+    			expression.printTo(pw);
+    		} else {
+    			pw.println("<expr>");
+    		}
+    		pw.decIndent();
+    	}
+    }
 
     public static class ReadIntExpr extends Expr {
 
@@ -1060,6 +1264,58 @@ public abstract class Tree {
     		pw.println("readline");
     	}
    }
+    
+    /*
+     * DCopyExpr
+     */
+    public static class DCopyExpr extends Expr {
+
+    	public Expr expr;
+    	
+    	public DCopyExpr(Expr expr, Location loc) {
+    		super(DCOPYEXPR, loc);
+    		this.expr = expr;
+    	}
+
+    	@Override
+    	public void accept(Visitor visitor) {
+    		visitor.visitDCopyExpr(this);
+    	}
+
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("dcopy");
+    		pw.incIndent();
+    		expr.printTo(pw);
+    		pw.decIndent();
+    	}
+   }
+    
+    /*
+     * SCopyExpr
+     */
+    public static class SCopyExpr extends Expr {
+
+    	public Expr expr;
+    	
+    	public SCopyExpr(Expr expr, Location loc) {
+    		super(SCOPYEXPR, loc);
+    		this.expr = expr;
+    	}
+
+    	@Override
+    	public void accept(Visitor visitor) {
+    		visitor.visitSCopyExpr(this);
+    	}
+
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("scopy");
+    		pw.incIndent();
+    		expr.printTo(pw);
+    		pw.decIndent();
+    	}
+   }
 
     public static class ThisExpr extends Expr {
 
@@ -1075,6 +1331,26 @@ public abstract class Tree {
     	@Override
     	public void printTo(IndentPrintWriter pw) {
     		pw.println("this");
+    	}
+   }
+
+    /*
+     * Super
+     */
+    public static class SuperExpr extends Expr {
+
+    	public SuperExpr(Location loc) {
+    		super(SUPEREXPR, loc);
+    	}
+
+    	@Override
+    	public void accept(Visitor visitor) {
+    		visitor.visitSuperExpr(this);
+    	}
+
+    	@Override
+    	public void printTo(IndentPrintWriter pw) {
+    		pw.println("super");
     	}
    }
 
@@ -1381,6 +1657,14 @@ public abstract class Tree {
             visitTree(that);
         }
 
+        public void visitDoStmt(DoStmt that) {
+            visitTree(that);
+        }
+
+        public void visitDoBranch(DoBranch that) {
+            visitTree(that);
+        }
+
         public void visitIf(If that) {
             visitTree(that);
         }
@@ -1425,6 +1709,14 @@ public abstract class Tree {
             visitTree(that);
         }
 
+        public void visitCondExpr(CondExpr that) {
+            visitTree(that);
+        }
+
+        public void visitCaseExpr(CaseExpr that) {
+            visitTree(that);
+        }
+
         public void visitReadIntExpr(ReadIntExpr that) {
             visitTree(that);
         }
@@ -1433,11 +1725,27 @@ public abstract class Tree {
             visitTree(that);
         }
 
+        public void visitDCopyExpr(DCopyExpr that) {
+            visitTree(that);
+        }
+
+        public void visitSCopyExpr(SCopyExpr that) {
+            visitTree(that);
+        }
+
         public void visitPrint(Print that) {
             visitTree(that);
         }
 
+        public void visitPrintComp(PrintComp that) {
+            visitTree(that);
+        }
+
         public void visitThisExpr(ThisExpr that) {
+            visitTree(that);
+        }
+
+        public void visitSuperExpr(SuperExpr that) {
             visitTree(that);
         }
 
