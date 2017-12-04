@@ -24,15 +24,19 @@ import java.util.*;
 %Jnodebug
 %Jnoconstruct
 
-%token VOID   BOOL  INT   STRING  CLASS 
+%token VOID   BOOL  INT   STRING   CLASS 
+%token COMPLEX		PRINY_COMP
 %token NULL   EXTENDS     THIS     WHILE   FOR   
 %token IF     ELSE        RETURN   BREAK   NEW
 %token PRINT  READ_INTEGER         READ_LINE
 %token LITERAL
-%token IDENTIFIER	  AND    OR    STATIC  INSTANCEOF
+%token IDENTIFIER	AND   OR       STATIC  INSTANCEOF
 %token LESS_EQUAL   GREATER_EQUAL  EQUAL   NOT_EQUAL
+%token CASE   DEFAULT     SUPER    DCOPY   SCOPY
+%token DO     OD    III
 %token '+'  '-'  '*'  '/'  '%'  '='  '>'  '<'  '.'
 %token ','  ';'  '!'  '('  ')'  '['  ']'  '{'  '}'
+%token '@'  '$'  '#'  ':'
 
 %left OR
 %left AND 
@@ -85,6 +89,10 @@ Type            :	INT
                 |	BOOL
                 	{
                 		$$.type = new Tree.TypeIdent(Tree.BOOL, $1.loc);
+                	}
+                |	COMPLEX
+                	{
+                		$$.type = new Tree.TypeIdent(Tree.COMPLEX, $1.loc);
                 	}
                 |	STRING
                 	{
@@ -193,8 +201,34 @@ Stmt		    :	VariableDef
                 |	ForStmt
                 |	ReturnStmt ';'
                 |	PrintStmt ';'
+                |	PrintCompStmt ';'
                 |	BreakStmt ';'
                 |	StmtBlock
+                |	DoStmt
+                ;
+            	
+DoStmt      	:	DO DoBranchList OD
+					{
+						$$.stmt = new Tree.DoStmt($2.elist, $2.loc);
+					}
+                ;
+                
+DoBranchList   	:	DoBranchList III DoBranch
+					{
+						$$.elist.add($3.expr);
+					}
+                |   DoBranch
+                	{
+                		$$ = new SemValue();
+                		$$.elist = new ArrayList<Expr> ();
+                		$$.elist.add($1.expr); 
+                	}
+                ;
+                
+DoBranch	   	:	Expr ':' Stmt
+					{
+						$$.expr = new Tree.DoBranch($1.expr, $3.stmt, $1.loc);
+					}
                 ;
 
 SimpleStmt      :	LValue '=' Expr
@@ -239,6 +273,43 @@ Call            :	Receiver IDENTIFIER '(' Actuals ')'
 						}
 					}
                 ;
+				
+OneCaseExpr		:	Constant ':' Expr ';'
+					{
+						$$.expr = new Tree.CaseExpr($1.expr, $3.expr, $3.loc);
+					}
+				;
+				
+DefCaseExpr		:	DEFAULT ':' Expr ';'
+					{
+						$$.expr = new Tree.CaseExpr($3.expr, $1.loc);
+					}
+				;
+
+ConstCaseList	:	OneCaseExpr ConstCaseList 
+					{
+						$$.elist = $2.elist;
+						$$.elist.add(0, $1.expr);
+					}
+				|	/* empty */
+					{
+						$$ = new SemValue();
+                		$$.elist = new ArrayList<Expr>();
+					}
+				;
+
+AllCaseList		:	ConstCaseList DefCaseExpr
+					{
+						$$.elist = $1.elist;
+						$$.elist.add($2.expr);
+					}
+				;
+                
+CondExpr		:	CASE '(' Expr ')' '{' AllCaseList '}'
+                	{
+                		$$.expr = new Tree.CondExpr($3.expr, $6.elist, $8.loc);
+                	}
+                ;
 
 Expr            :	LValue
 					{
@@ -246,6 +317,7 @@ Expr            :	LValue
 					}
                 |	Call
                 |	Constant
+                |	CondExpr
                 |	Expr '+' Expr
                 	{
                 		$$.expr = new Tree.Binary(Tree.PLUS, $1.expr, $3.expr, $2.loc);
@@ -310,6 +382,18 @@ Expr            :	LValue
                 	{
                 		$$.expr = new Tree.Unary(Tree.NOT, $2.expr, $1.loc);
                 	}
+                |	'@' Expr
+                	{
+                		$$.expr = new Tree.Unary(Tree.RE, $2.expr, $1.loc);
+                	}
+                |	'$' Expr
+                	{
+                		$$.expr = new Tree.Unary(Tree.IM, $2.expr, $1.loc);
+                	}
+                |	'#' Expr
+                	{
+                		$$.expr = new Tree.Unary(Tree.COMPCAST, $2.expr, $1.loc);
+                	}
                 |	READ_INTEGER '(' ')'
                 	{
                 		$$.expr = new Tree.ReadIntExpr($1.loc);
@@ -318,9 +402,21 @@ Expr            :	LValue
                 	{
                 		$$.expr = new Tree.ReadLineExpr($1.loc);
                 	}
+                |	DCOPY '(' Expr ')'
+                	{
+                		$$.expr = new Tree.DCopyExpr($3.expr, $1.loc);
+                	}
+                |	SCOPY '(' Expr ')'
+                	{
+                		$$.expr = new Tree.SCopyExpr($3.expr, $1.loc);
+                	}
                 |	THIS
                 	{
                 		$$.expr = new Tree.ThisExpr($1.loc);
+                	}
+                |	SUPER
+                	{
+                		$$.expr = new Tree.SuperExpr($1.loc);
                 	}
                 |	NEW IDENTIFIER '(' ')'
                 	{
@@ -416,6 +512,12 @@ ReturnStmt      :	RETURN Expr
 PrintStmt       :	PRINT '(' ExprList ')'
 					{
 						$$.stmt = new Print($3.elist, $1.loc);
+					}
+                ;
+
+PrintCompStmt   :	PRINT_COMP '(' ExprList ')'
+					{
+						$$.stmt = new PrintComp($3.elist, $1.loc);
 					}
                 ;
 

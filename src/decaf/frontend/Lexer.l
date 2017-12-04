@@ -36,8 +36,9 @@ HEX_DIGIT 			= ([0-9A-Fa-f])
 HEX_INTEGER			= (0[Xx]{HEX_DIGIT}+)
 DEC_INTEGER			= ({DIGIT}+)
 INTEGER				= ({HEX_INTEGER}|{DEC_INTEGER})
+IMG					= ({INTEGER}j)
 IDENTIFIER			= ([A-Za-z][_0-9A-Za-z]*)
-SIMPLE_OPERATOR		= ("+"|"-"|"*"|"/"|"%"|"="|"<"|">"|"."|","|";"|"!"|"("|")"|"["|"]"|"{"|"}")
+SIMPLE_OPERATOR		= ("+"|"-"|"*"|"/"|"%"|"="|"<"|">"|"."|","|";"|"!"|"("|")"|"["|"]"|"{"|"}"|"@"|"$"|"#"|":")
 S_COMMENT			= ("//"[^\r\n]*{NEWLINE})
 WHITESPACE			= ([ \t]+)
 
@@ -55,6 +56,7 @@ WHITESPACE			= ([ \t]+)
 "void"				{ return keyword(Parser.VOID);			}
 "int"				{ return keyword(Parser.INT);			}
 "bool"				{ return keyword(Parser.BOOL);			}
+"complex"			{ return keyword(Parser.COMPLEX);		}
 "string"			{ return keyword(Parser.STRING);		}
 "new"				{ return keyword(Parser.NEW);			}
 "null"				{ return keyword(Parser.NULL);			}
@@ -68,10 +70,19 @@ WHITESPACE			= ([ \t]+)
 "return"			{ return keyword(Parser.RETURN);		}
 "break"				{ return keyword(Parser.BREAK);			}
 "Print"				{ return keyword(Parser.PRINT);			}
+"PrintComp"			{ return keyword(Parser.PRINT_COMP);	}
 "ReadInteger"		{ return keyword(Parser.READ_INTEGER);	}
 "ReadLine"			{ return keyword(Parser.READ_LINE);		}
 "static"			{ return keyword(Parser.STATIC);		}
 "instanceof"		{ return keyword(Parser.INSTANCEOF);	}
+"default"			{ return keyword(Parser.DEFAULT);		}
+"case"				{ return keyword(Parser.CASE);			}
+"super"				{ return keyword(Parser.SUPER);			}
+"dcopy"				{ return keyword(Parser.DCOPY);			}
+"scopy"				{ return keyword(Parser.SCOPY);			}
+"do"				{ return keyword(Parser.DO);			}
+"|||"				{ return keyword(Parser.III);			}
+"od"				{ return keyword(Parser.OD);			}
 
 	// 识别操作符的规则
 "<="				{ return operator(Parser.LESS_EQUAL);	}
@@ -85,7 +96,10 @@ WHITESPACE			= ([ \t]+)
 	// 识别常数的规则
 "true"				{ return boolConst(true);										}
 "false"				{ return boolConst(false);										}
-{INTEGER}			{ return intConst(yytext());			}
+{INTEGER}			{ return intConst(yytext());									}
+{IMG}				{ String tmp = yytext();
+					  tmp = tmp.substring(0, tmp.length() - 1);
+					  return imgConst(tmp);											}
 <YYINITIAL>\"		{ sloc = getLocation();		  
 					  yybegin(S);
 					  buffer = new StringBuilder();								    }
