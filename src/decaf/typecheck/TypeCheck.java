@@ -14,6 +14,7 @@ import decaf.error.BadLengthArgError;
 import decaf.error.BadLengthError;
 import decaf.error.BadNewArrayLength;
 import decaf.error.BadPrintArgError;
+import decaf.error.BadPrintCompArgError;
 import decaf.error.BadReturnTypeError;
 import decaf.error.BadTestExpr;
 import decaf.error.BreakOutOfLoopError;
@@ -523,6 +524,19 @@ public class TypeCheck extends Tree.Visitor {
 					&& !e.type.equal(BaseType.INT)
 					&& !e.type.equal(BaseType.STRING)) {
 				issueError(new BadPrintArgError(e.getLocation(), Integer
+						.toString(i), e.type.toString()));
+			}
+		}
+	}
+
+	@Override
+	public void visitPrintComp(Tree.PrintComp printCompStmt) {
+		int i = 0;
+		for (Tree.Expr e : printCompStmt.exprs) {
+			e.accept(this);
+			i++;
+			if (!e.type.equal(BaseType.ERROR) && !e.type.equal(BaseType.COMPLEX)) {
+				issueError(new BadPrintCompArgError(e.getLocation(), Integer
 						.toString(i), e.type.toString()));
 			}
 		}
