@@ -1,4 +1,5 @@
 TestCases/*
 tools/*
+result/*
 *.pdf
 *.class
