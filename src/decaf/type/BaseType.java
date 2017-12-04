@@ -11,6 +11,10 @@ public class BaseType extends Type {
 	public static final BaseType INT = new BaseType("int");
 	
 	public static final BaseType BOOL = new BaseType("bool");
+	
+	public static final BaseType COMPLEX = new BaseType("complex");
+	
+	public static final BaseType IMG = new BaseType("img");
 
 	public static final BaseType NULL = new BaseType("null");
 
@@ -31,6 +35,9 @@ public class BaseType extends Type {
 			return true;
 		}
 		if (equal(NULL) && type.isClassType()) {
+			return true;
+		}
+		if (equal(IMG) && type.equal(COMPLEX)) {
 			return true;
 		}
 		return equal(type);

@@ -170,6 +170,9 @@ public class BuildSym extends Tree.Visitor {
 		case Tree.INT:
 			type.type = BaseType.INT;
 			break;
+		case Tree.COMPLEX:
+			type.type = BaseType.COMPLEX;
+			break;
 		case Tree.BOOL:
 			type.type = BaseType.BOOL;
 			break;

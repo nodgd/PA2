@@ -97,6 +97,9 @@ public class TypeCheck extends Tree.Visitor {
 		case Tree.BOOL:
 			literal.type = BaseType.BOOL;
 			break;
+		case Tree.IMG:
+			literal.type = BaseType.IMG;
+			break;
 		case Tree.STRING:
 			literal.type = BaseType.STRING;
 			break;
@@ -538,6 +541,9 @@ public class TypeCheck extends Tree.Visitor {
 			break;
 		case Tree.INT:
 			type.type = BaseType.INT;
+			break;
+		case Tree.COMPLEX:
+			type.type = BaseType.COMPLEX;
 			break;
 		case Tree.BOOL:
 			type.type = BaseType.BOOL;

@@ -1032,6 +1032,15 @@ public abstract class Tree {
     		case NOT:
     			unaryOperatorToString(pw, "not");
     			break;
+            case RE:
+                unaryOperatorToString(pw, "re");
+                break;
+            case IM:
+                unaryOperatorToString(pw, "im");
+                break;
+            case COMPCAST:
+                unaryOperatorToString(pw, "compcast");
+                break;
 			}
     	}
    }
@@ -1504,6 +1513,9 @@ public abstract class Tree {
     		case BOOL:
     			pw.println("boolconst " + value);
     			break;
+    		case IMG:
+    			pw.println("imgconst " + value + "j");
+    			break;
     		default:
     			pw.println("stringconst " + MiscUtils.quote((String)value));
     		}
@@ -1562,6 +1574,9 @@ public abstract class Tree {
     			break;
     		case BOOL:
     			pw.print("booltype");
+    			break;
+    		case COMPLEX:
+    			pw.print("comptype");
     			break;
     		case VOID:
     			pw.print("voidtype");
