@@ -68,7 +68,8 @@ public class TypeCheck extends Tree.Visitor {
 	@Override
 	public void visitUnary(Tree.Unary expr) {
 		expr.expr.accept(this);
-		if(expr.tag == Tree.NEG){
+		switch (expr.tag) {
+		case Tree.NEG:
 			if (expr.expr.type.equal(BaseType.ERROR)
 					|| expr.expr.type.equal(BaseType.INT)) {
 				expr.type = expr.expr.type;
@@ -77,14 +78,41 @@ public class TypeCheck extends Tree.Visitor {
 						expr.expr.type.toString()));
 				expr.type = BaseType.ERROR;
 			}
-		}
-		else{
-			if (!(expr.expr.type.equal(BaseType.BOOL) || expr.expr.type
-					.equal(BaseType.ERROR))) {
+			break;
+		case Tree.NOT:
+			if (!(expr.expr.type.equal(BaseType.BOOL) 
+					|| expr.expr.type.equal(BaseType.ERROR))) {
 				issueError(new IncompatUnOpError(expr.getLocation(), "!",
 						expr.expr.type.toString()));
 			}
 			expr.type = BaseType.BOOL;
+			break;
+		case Tree.RE:
+			if (!(expr.expr.type.equal(BaseType.ERROR)
+					|| expr.expr.type.compatible(BaseType.COMPLEX))) {
+				issueError(new IncompatUnOpError(expr.getLocation(), "@",
+						expr.expr.type.toString()));
+			}
+			expr.type = BaseType.INT;
+			break;
+		case Tree.IM:
+			if (!(expr.expr.type.equal(BaseType.ERROR)
+					|| expr.expr.type.compatible(BaseType.COMPLEX))) {
+				issueError(new IncompatUnOpError(expr.getLocation(), "$",
+						expr.expr.type.toString()));
+			}
+			expr.type = BaseType.INT;
+			break;
+		case Tree.COMPCAST:
+			if (!(expr.expr.type.equal(BaseType.ERROR)
+					|| expr.expr.type.equal(BaseType.INT))) {
+				issueError(new IncompatUnOpError(expr.getLocation(), "#",
+						expr.expr.type.toString()));
+			}
+			expr.type = BaseType.COMPLEX;
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -604,8 +632,38 @@ public class TypeCheck extends Tree.Visitor {
 		Type returnType = BaseType.ERROR;
 		switch (op) {
 		case Tree.PLUS:
+			if ((left.type.equal(BaseType.INT)
+					&& right.type.compatible(BaseType.COMPLEX))
+				|| (left.type.compatible(BaseType.COMPLEX)
+					&& right.type.equal(BaseType.INT))
+				|| (left.type.compatible(BaseType.COMPLEX)
+					&& right.type.compatible(BaseType.COMPLEX))) {
+				compatible = true;
+				returnType = BaseType.COMPLEX;
+				break;
+			} else if (left.type.compatible(BaseType.COMPLEX)
+				|| right.type.compatible(BaseType.COMPLEX)) {
+				compatible = false;
+				returnType = BaseType.COMPLEX;
+				break;
+			}
 		case Tree.MINUS:
 		case Tree.MUL:
+			if ((left.type.equal(BaseType.INT)
+					&& right.type.compatible(BaseType.COMPLEX))
+				|| (left.type.compatible(BaseType.COMPLEX)
+					&& right.type.equal(BaseType.INT))
+				|| (left.type.compatible(BaseType.COMPLEX)
+					&& right.type.compatible(BaseType.COMPLEX))) {
+				compatible = true;
+				returnType = BaseType.COMPLEX;
+				break;
+			} else if (left.type.compatible(BaseType.COMPLEX)
+				|| right.type.compatible(BaseType.COMPLEX)) {
+				compatible = false;
+				returnType = BaseType.COMPLEX;
+				break;
+			}
 		case Tree.DIV:
 			compatible = left.type.equals(BaseType.INT)
 					&& left.type.equal(right.type);
