@@ -154,6 +154,18 @@ public class TypeCheck extends Tree.Visitor {
 	}
 
 	@Override
+	public void visitDCopyExpr(Tree.DCopyExpr dcopyExpr) {
+		dcopyExpr.expr.accept(this);
+		dcopyExpr.type = dcopyExpr.expr.type;
+	}
+
+	@Override
+	public void visitSCopyExpr(Tree.SCopyExpr scopyExpr) {
+		scopyExpr.expr.accept(this);
+		scopyExpr.type = scopyExpr.expr.type;
+	}
+
+	@Override
 	public void visitIndexed(Tree.Indexed indexed) {
 		indexed.lvKind = Tree.LValue.Kind.ARRAY_ELEMENT;
 		indexed.array.accept(this);
@@ -499,7 +511,7 @@ public class TypeCheck extends Tree.Visitor {
 		}
 		table.close();
 	}
-
+	
 	@Override
 	public void visitAssign(Tree.Assign assign) {
 		assign.left.accept(this);
