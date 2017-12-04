@@ -30,6 +30,8 @@ import decaf.error.NotClassFieldError;
 import decaf.error.NotClassMethodError;
 import decaf.error.RefNonStaticError;
 import decaf.error.SubNotIntError;
+import decaf.error.SuperInStaticFuncError;
+import decaf.error.SuperMemberVarError;
 import decaf.error.ThisInStaticFuncError;
 import decaf.error.UndeclVarError;
 import decaf.frontend.Parser;
@@ -321,6 +323,17 @@ public class TypeCheck extends Tree.Visitor {
 	}
 
 	@Override
+	public void visitSuperExpr(Tree.SuperExpr superExpr) {
+		if (currentFunction.isStatik()) {
+			issueError(new SuperInStaticFuncError(superExpr.getLocation()));
+			superExpr.type = BaseType.ERROR;
+		} else {
+			superExpr.type = ((ClassScope) table.lookForScope(Scope.Kind.CLASS))
+					.getOwner().getType();
+		}
+	}
+
+	@Override
 	public void visitTypeTest(Tree.TypeTest instanceofExpr) {
 		instanceofExpr.instance.accept(this);
 		if (!instanceofExpr.instance.type.isClassType()) {
@@ -400,6 +413,9 @@ public class TypeCheck extends Tree.Visitor {
 				if (ident.owner.isClass || !ident.owner.type.isClassType()) {
 					issueError(new NotClassFieldError(ident.getLocation(),
 							ident.name, ident.owner.type.toString()));
+					ident.type = BaseType.ERROR;
+				} else if (ident.owner.tag == Tree.SUPEREXPR) {
+					issueError(new SuperMemberVarError(ident.getLocation()));
 					ident.type = BaseType.ERROR;
 				} else {
 					ClassScope cs = ((ClassType) ident.owner.type)
