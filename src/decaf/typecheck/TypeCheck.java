@@ -335,7 +335,7 @@ public class TypeCheck extends Tree.Visitor {
 		for (Tree.Expr expr : condExpr.caseList) {
 			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
 			caseExpr.accept(this);
-			//妫�娴嬪乏杈圭殑鍊兼槸鍚︽湁閲嶅
+			//left
 			if (caseExpr.constant != null) {
 				if (keySet.contains(((Tree.Literal) caseExpr.constant).value)) {
 					issueError(new CaseExprSwitchRepeatErrpr(caseExpr.getLocation()));
@@ -343,7 +343,7 @@ public class TypeCheck extends Tree.Visitor {
 					keySet.add(((Tree.Literal) caseExpr.constant).value);
 				}
 			}
-			//妫�娴嬪彸杈圭殑绫诲瀷鏄惁鍏ㄧ浉鍚�
+			//right
 			Type caseExprType = caseExpr.type;
 			if (caseExprType.equal(BaseType.IMG)) {
 				caseExprType = BaseType.COMPLEX;

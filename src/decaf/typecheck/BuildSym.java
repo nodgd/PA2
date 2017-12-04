@@ -224,6 +224,20 @@ public class BuildSym extends Tree.Visitor {
 			forLoop.loopBody.accept(this);
 		}
 	}
+	
+	@Override
+	public void visitDoStmt(Tree.DoStmt doStmt) {
+		for (Tree.Expr expr : doStmt.branchList) {
+			expr.accept(this);
+		}
+	}
+	
+	@Override
+	public void visitDoBranch(Tree.DoBranch doBranch) {
+		if (doBranch.assign != null) {
+			doBranch.assign.accept(this);
+		}
+	}
 
 	@Override
 	public void visitIf(Tree.If ifStmt) {
