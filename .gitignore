@@ -7,3 +7,5 @@ src/decaf/frontend/Lexer.java
 /bin/
 .project
 .classpath
+*.docx
+*.tmp

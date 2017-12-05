@@ -329,13 +329,11 @@ public class TypeCheck extends Tree.Visitor {
 			issueError(new CaseExprSwitchTypeError(condExpr.switchExpr.getLocation(),
 					condExpr.switchExpr.type.toString()));
 		}
-		condExpr.type = null;
-		boolean getTypeError = false;
+		//left
 		Set<Object> keySet = new HashSet<Object>();
 		for (Tree.Expr expr : condExpr.caseList) {
 			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
 			caseExpr.accept(this);
-			//left
 			if (caseExpr.constant != null) {
 				if (keySet.contains(((Tree.Literal) caseExpr.constant).value)) {
 					issueError(new CaseExprSwitchRepeatError(caseExpr.getLocation()));
@@ -343,14 +341,23 @@ public class TypeCheck extends Tree.Visitor {
 					keySet.add(((Tree.Literal) caseExpr.constant).value);
 				}
 			}
-			//right
+		}
+		//right
+		Tree.CaseExpr defaultExpr = (Tree.CaseExpr) condExpr.caseList.get(condExpr.caseList.size() - 1);
+		if (defaultExpr.constant == null) {
+			condExpr.type = defaultExpr.type;
+		} else {
+			condExpr.type = BaseType.ERROR;
+		}
+		boolean getTypeError = false; 
+		for (Tree.Expr expr : condExpr.caseList) {
+			Tree.CaseExpr caseExpr = (Tree.CaseExpr) expr;
 			Type caseExprType = caseExpr.type;
 			if (caseExprType.equal(BaseType.IMG)) {
 				caseExprType = BaseType.COMPLEX;
 			}
-			if (condExpr.type == null) {
-			    condExpr.type = caseExprType;
-			} else if (!condExpr.type.equal(caseExprType)) {
+			if (!condExpr.type.equal(BaseType.ERROR)
+				&& !condExpr.type.equal(caseExprType)) {
 				issueError(new CaseExprTypeError(caseExpr.getLocation(),
 						condExpr.type.toString(), caseExprType.toString()));
 				getTypeError = true;
