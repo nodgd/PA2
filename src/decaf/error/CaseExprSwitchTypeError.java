@@ -6,11 +6,11 @@ import decaf.Location;
  * example：incompatible case expr: bool given, but int expected<br>
  * PA2
  */
-public class CaseExprSwitchTypeErrpr extends DecafError {
+public class CaseExprSwitchTypeError extends DecafError {
 
 	private String switchExpr;
 	
-	public CaseExprSwitchTypeErrpr(Location location, String switchExpr) {
+	public CaseExprSwitchTypeError(Location location, String switchExpr) {
 		super(location);
 		this.switchExpr = switchExpr.equals("img") ? "complex" : switchExpr;
 	}

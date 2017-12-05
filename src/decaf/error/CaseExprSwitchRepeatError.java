@@ -6,9 +6,9 @@ import decaf.Location;
  * example：condition is not unique<br>
  * PA2
  */
-public class CaseExprSwitchRepeatErrpr extends DecafError {
+public class CaseExprSwitchRepeatError extends DecafError {
 	
-	public CaseExprSwitchRepeatErrpr(Location location) {
+	public CaseExprSwitchRepeatError(Location location) {
 		super(location);
 	}
 

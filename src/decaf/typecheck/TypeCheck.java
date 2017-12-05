@@ -22,9 +22,9 @@ import decaf.error.BadPrintCompArgError;
 import decaf.error.BadReturnTypeError;
 import decaf.error.BadTestExpr;
 import decaf.error.BreakOutOfLoopError;
-import decaf.error.CaseExprSwitchRepeatErrpr;
-import decaf.error.CaseExprSwitchTypeErrpr;
-import decaf.error.CaseExprTypeErrpr;
+import decaf.error.CaseExprSwitchRepeatError;
+import decaf.error.CaseExprSwitchTypeError;
+import decaf.error.CaseExprTypeError;
 import decaf.error.ClassNotFoundError;
 import decaf.error.DecafError;
 import decaf.error.DoBranchLesTypeError;
@@ -326,7 +326,7 @@ public class TypeCheck extends Tree.Visitor {
 	public void visitCondExpr(Tree.CondExpr condExpr) {
 		condExpr.switchExpr.accept(this);
 		if (!condExpr.switchExpr.type.equal(BaseType.INT)) {
-			issueError(new CaseExprSwitchTypeErrpr(condExpr.switchExpr.getLocation(),
+			issueError(new CaseExprSwitchTypeError(condExpr.switchExpr.getLocation(),
 					condExpr.switchExpr.type.toString()));
 		}
 		condExpr.type = null;
@@ -338,7 +338,7 @@ public class TypeCheck extends Tree.Visitor {
 			//left
 			if (caseExpr.constant != null) {
 				if (keySet.contains(((Tree.Literal) caseExpr.constant).value)) {
-					issueError(new CaseExprSwitchRepeatErrpr(caseExpr.getLocation()));
+					issueError(new CaseExprSwitchRepeatError(caseExpr.getLocation()));
 				} else {
 					keySet.add(((Tree.Literal) caseExpr.constant).value);
 				}
@@ -351,7 +351,7 @@ public class TypeCheck extends Tree.Visitor {
 			if (condExpr.type == null) {
 			    condExpr.type = caseExprType;
 			} else if (!condExpr.type.equal(caseExprType)) {
-				issueError(new CaseExprTypeErrpr(caseExpr.getLocation(),
+				issueError(new CaseExprTypeError(caseExpr.getLocation(),
 						condExpr.type.toString(), caseExprType.toString()));
 				getTypeError = true;
 			}
@@ -369,7 +369,7 @@ public class TypeCheck extends Tree.Visitor {
 		caseExpr.expression.accept(this);
 		if (caseExpr.constant != null
 			&& !caseExpr.constant.type.equal(BaseType.INT)) {
-			issueError(new CaseExprSwitchTypeErrpr(caseExpr.getLocation(),
+			issueError(new CaseExprSwitchTypeError(caseExpr.getLocation(),
 					caseExpr.constant.type.toString()));
 		}
 		caseExpr.type = caseExpr.expression.type;
