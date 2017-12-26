@@ -638,10 +638,12 @@ public class TypeCheck extends Tree.Visitor {
 	
 	@Override
 	public void visitDoStmt(Tree.DoStmt doStmt) {
+		breaks.add(doStmt);
 		for (Tree.Expr expr : doStmt.branchList) {
 			Tree.DoBranch doBranch = (Tree.DoBranch) expr;
 			doBranch.accept(this);
 		}
+		breaks.pop();
 	}
 	
 	@Override
